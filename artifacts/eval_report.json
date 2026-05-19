@@ -1,0 +1,17 @@
+{
+  "test_rmse": 1.2484075918920254,
+  "best_trial": 6,
+  "best_val_rmse": 1.0959477115979959,
+  "best_params": {
+    "n_layers": 1,
+    "hidden_size": 256,
+    "activation": "silu",
+    "dropout_rate": 0.45000000000000007,
+    "use_batch_norm": false,
+    "learning_rate": 0.0011986281799901185,
+    "weight_decay": 0.0026443593078398627,
+    "batch_size": 32,
+    "optimizer": "adamw"
+  },
+  "n_trials_completed": 10
+}
