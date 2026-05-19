@@ -17,7 +17,7 @@
 | Preprocessing / encoders | scikit-learn |
 | Model serialization | `torch.save` + ONNX export (for portability) |
 
-See `ml/specs.md` for the full ML architecture and NAS search space.
+See `milestone_2/requirements.md` and `milestone_2/plan.md` for the full ML architecture and NAS search space.
 
 ---
 

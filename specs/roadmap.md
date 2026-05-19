@@ -9,7 +9,7 @@ Milestones are sequential. Estimated durations assume one focused developer.
 **Goal:** Have clean, model-ready tabular data and a clear feature schema.
 
 - Identify and acquire training datasets (public agronomic databases, field trial records)
-- Define the canonical feature schema (see `ml/specs.md` for input/output spec)
+- Define the canonical feature schema (see `milestone_2/requirements.md` for input/output spec)
 - Build data cleaning, validation, and preprocessing pipeline
 - Document data provenance and known gaps
 
