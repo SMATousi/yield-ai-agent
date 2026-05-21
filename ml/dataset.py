@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import Dataset, DataLoader
+from sklearn.model_selection import train_test_split
 
 N_FEATURES = 50
 FEATURE_COLS = [f"feat_{i}" for i in range(N_FEATURES)]
@@ -43,6 +44,48 @@ def env_split(
         df[df["env_id"].isin(val_envs)].reset_index(drop=True),
         df[df["env_id"].isin(test_envs)].reset_index(drop=True),
     )
+
+def source_env_split(
+        df: pd.DataFrame,
+        val_frac: float = 0.15,
+        test_frac: float = 0.15,
+        seed: int = 42
+    ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+
+     """Split by environment ID, stratified by dataset_source."""
+
+     df_env = (
+         df[["env_id","dataset_source"]]
+         .drop_duplicates()
+         .reset_index(drop = True)
+         )
+     
+     train_vals_envs, test_envs = train_test_split(
+         df_env,
+         test_size = test_frac,
+         random_state= seed,
+         stratify = df_env["dataset_source"]
+     )
+
+     val_size_adj = val_frac / (1 - test_frac)
+
+     train_envs, val_envs = train_test_split(
+         train_vals_envs,
+         test_size = val_size_adj,
+         random_state = seed,
+         stratify = train_vals_envs["dataset_source"]
+     )
+
+     train_envs = set(train_envs["env_id"])
+     val_envs = set(val_envs["env_id"])
+     test_envs = set(test_envs["env_id"])
+
+     return (
+         df[df["env_id"].isin(train_envs)].reset_index(drop=True),
+         df[df["env_id"].isin(val_envs)].reset_index(drop=True),
+         df[df["env_id"].isin(test_envs)].reset_index(drop=True),
+         )
+
 
 
 class YieldDataset(Dataset):
