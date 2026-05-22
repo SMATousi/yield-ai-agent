@@ -3,6 +3,7 @@ import pandas as pd
 import torch
 from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import StandardScaler
+from typing import Callable
 
 N_FEATURES = 53
 FEATURE_COLS = [f"feat_{i}" for i in range(N_FEATURES)]
@@ -85,9 +86,11 @@ def preprocessing_data(df: pd.DataFrame,
                        rm_column_name: str,
                        val_frac: float = 0.15,
                        test_frac: float = 0.15,
-                       seed: int = 42) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+                       seed: int = 42,
+                       func_split: Callable = env_split,
+                       **kwargs) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     
-    train_df, val_df, test_df = env_split(df= df, seed = seed, val_frac = val_frac, test_frac= test_frac)
+    train_df, val_df, test_df = func_split(df= df, seed = seed, val_frac = val_frac, test_frac= test_frac, **kwargs)
 
     train_df, val_df, test_df = standardize_data((train_df, val_df, test_df), rm_column_name)
 
