@@ -82,15 +82,11 @@ def encode_rm(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_column_na
 
     return train_df, val_df, test_df
 
-def preprocessing_data(df: pd.DataFrame,
+def preprocessing_data(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame],
                        rm_column_name: str,
-                       val_frac: float = 0.15,
-                       test_frac: float = 0.15,
-                       seed: int = 42,
-                       func_split: Callable = env_split,
-                       **kwargs) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+                       ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     
-    train_df, val_df, test_df = func_split(df= df, seed = seed, val_frac = val_frac, test_frac= test_frac, **kwargs)
+    train_df, val_df, test_df = dfs
 
     train_df, val_df, test_df = standardize_data((train_df, val_df, test_df), rm_column_name)
 

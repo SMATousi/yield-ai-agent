@@ -45,9 +45,9 @@ def main() -> None:
     print("Loading data...")
     df = pd.read_csv("data.csv") #make_synthetic_data(seed=args.seed)
 
-    #train_df, val_df, test_df = env_split(df, seed=args.seed)
+    train_df, val_df, test_df = env_split(df, seed=args.seed)
 
-    train_df, val_df, test_df = preprocessing_data(df,"feat_1" ,seed=args.seed)
+    train_df, val_df, test_df = preprocessing_data((train_df, val_df, test_df),"feat_1")
 
     print(
         f"  train: {len(train_df):,} obs  "
