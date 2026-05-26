@@ -47,7 +47,7 @@ def main() -> None:
 
     train_df, val_df, test_df = env_split(df, seed=args.seed)
 
-    train_df, val_df, test_df = preprocessing_data((train_df, val_df, test_df),"feat_1")
+    train_df, val_df, test_df = preprocessing_data((train_df, val_df, test_df))
 
     print(
         f"  train: {len(train_df):,} obs  "

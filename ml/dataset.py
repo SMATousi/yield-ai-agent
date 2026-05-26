@@ -46,7 +46,7 @@ def env_split(
         df[df["env_id"].isin(test_envs)].reset_index(drop=True),
     )
 
-def standardize_data(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_column_name: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def standardize_data(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_column_name: str = "rm") -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     train_df, val_df, test_df = dfs
 
     train_df = train_df.copy()
@@ -55,7 +55,7 @@ def standardize_data(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_co
 
     feature_cols = [
         col for col in train_df.columns
-        if col not in ["yield", "env_id","region","dataset_source",rm_column_name,"feat_51","feat_52","feat_53"] #,"feat_0","feat_1","feat_2","feat_3"
+        if col not in ["yield", "env_id","region","dataset_source",rm_column_name,"feat_51","feat_52","feat_53"] #feats: 51, 52 and 53, hot encoding for Region
     ]
 
     scaler = StandardScaler()
@@ -66,7 +66,7 @@ def standardize_data(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_co
 
     return train_df, val_df, test_df
 
-def encode_rm(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_column_name: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def encode_rm(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_column_name: str = "rm") -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     train_df, val_df, test_df = dfs
 
     train_df = train_df.copy()
@@ -87,7 +87,7 @@ def encode_rm(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_column_na
     return train_df, val_df, test_df
 
 def preprocessing_data(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame],
-                       rm_column_name: str,
+                       rm_column_name: str = "rm",
                        ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     
     train_df, val_df, test_df = dfs
