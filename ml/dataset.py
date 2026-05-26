@@ -2,8 +2,12 @@ import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import Dataset, DataLoader
+<<<<<<< HEAD
 from sklearn.preprocessing import StandardScaler
 from typing import Callable
+=======
+from sklearn.model_selection import train_test_split
+>>>>>>> ms-split-env-by-datasource-on-dataset
 
 N_FEATURES = 53
 FEATURE_COLS = [f"feat_{i}" for i in range(N_FEATURES)]
@@ -46,6 +50,7 @@ def env_split(
         df[df["env_id"].isin(test_envs)].reset_index(drop=True),
     )
 
+<<<<<<< HEAD
 def standardize_data(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_column_name: str = "rm") -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     train_df, val_df, test_df = dfs
 
@@ -97,6 +102,84 @@ def preprocessing_data(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame],
     train_df, val_df, test_df = encode_rm((train_df, val_df, test_df),rm_column_name)
 
     return train_df, val_df, test_df
+=======
+def source_env_split(
+        df: pd.DataFrame,
+        val_frac: float = 0.15,
+        test_frac: float = 0.15,
+        seed: int = 42
+    ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+
+     """Split by environment ID, stratified by dataset_source."""
+
+     df_env = (
+         df[["env_id","dataset_source"]]
+         .drop_duplicates()
+         .reset_index(drop = True)
+         )
+     
+     train_vals_envs, test_envs = train_test_split(
+         df_env,
+         test_size = test_frac,
+         random_state= seed,
+         stratify = df_env["dataset_source"]
+     )
+
+     val_size_adj = val_frac / (1 - test_frac)
+
+     train_envs, val_envs = train_test_split(
+         train_vals_envs,
+         test_size = val_size_adj,
+         random_state = seed,
+         stratify = train_vals_envs["dataset_source"]
+     )
+
+     train_envs = set(train_envs["env_id"])
+     val_envs = set(val_envs["env_id"])
+     test_envs = set(test_envs["env_id"])
+
+     return (
+         df[df["env_id"].isin(train_envs)].reset_index(drop=True),
+         df[df["env_id"].isin(val_envs)].reset_index(drop=True),
+         df[df["env_id"].isin(test_envs)].reset_index(drop=True),
+         )
+
+def are_rm_levels_in_train(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_column_name: str = "rm",) -> bool:
+    train_df, val_df, test_df = dfs
+
+    train_rms = set(train_df[rm_column_name].unique())
+    val_rms = set(val_df[rm_column_name].unique())
+    test_rms = set(test_df[rm_column_name].unique())
+
+    return val_rms.issubset(train_rms) and test_rms.issubset(train_rms)
+
+def rm_safe_source_env_split(
+        df: pd.DataFrame,
+        rm_column_name: str = "rm",
+        val_frac: float = 0.15,
+        test_frac: float = 0.15,
+        seed: int = 42,
+    ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+
+    train_df, val_df, test_df = source_env_split(df, val_frac,test_frac,seed)
+
+    all_rms = are_rm_levels_in_train((train_df, val_df, test_df), rm_column_name)
+
+    iteration = 0
+
+    while not all_rms and iteration < 50:
+          iteration += 1
+          seed += 1
+
+          train_df, val_df, test_df = source_env_split(df, val_frac,test_frac,seed)
+          all_rms = are_rm_levels_in_train((train_df, val_df, test_df), rm_column_name)
+
+    if not all_rms:
+        raise ValueError("Could not find a split where all RM levels in val/test are present in train.")
+
+    print(f"Seed used for splitting: {seed} after {iteration} retries.")
+    return train_df, val_df, test_df 
+>>>>>>> ms-split-env-by-datasource-on-dataset
 
 class YieldDataset(Dataset):
     def __init__(self, df: pd.DataFrame, feature_cols: list[str] = FEATURE_COLS):
