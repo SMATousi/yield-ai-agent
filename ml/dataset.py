@@ -2,12 +2,9 @@ import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import Dataset, DataLoader
-<<<<<<< HEAD
 from sklearn.preprocessing import StandardScaler
 from typing import Callable
-=======
 from sklearn.model_selection import train_test_split
->>>>>>> ms-split-env-by-datasource-on-dataset
 
 N_FEATURES = 53
 FEATURE_COLS = [f"feat_{i}" for i in range(N_FEATURES)]
@@ -50,7 +47,6 @@ def env_split(
         df[df["env_id"].isin(test_envs)].reset_index(drop=True),
     )
 
-<<<<<<< HEAD
 def standardize_data(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_column_name: str = "rm") -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     train_df, val_df, test_df = dfs
 
@@ -102,7 +98,7 @@ def preprocessing_data(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame],
     train_df, val_df, test_df = encode_rm((train_df, val_df, test_df),rm_column_name)
 
     return train_df, val_df, test_df
-=======
+
 def source_env_split(
         df: pd.DataFrame,
         val_frac: float = 0.15,
@@ -179,7 +175,6 @@ def rm_safe_source_env_split(
 
     print(f"Seed used for splitting: {seed} after {iteration} retries.")
     return train_df, val_df, test_df 
->>>>>>> ms-split-env-by-datasource-on-dataset
 
 class YieldDataset(Dataset):
     def __init__(self, df: pd.DataFrame, feature_cols: list[str] = FEATURE_COLS):

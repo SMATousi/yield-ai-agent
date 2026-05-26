@@ -13,7 +13,7 @@ import os
 
 import torch
 
-from ml.dataset import N_FEATURES, make_loaders, make_synthetic_data, env_split, preprocessing_data
+from ml.dataset import N_FEATURES, make_loaders, env_split, preprocessing_data, rm_safe_source_env_split
 from ml.model import YieldMLP
 from ml.trainer import run_epoch, train_model
 
@@ -45,7 +45,7 @@ def main() -> None:
     print("Loading data...")
     df = pd.read_csv("data.csv") #make_synthetic_data(seed=args.seed)
 
-    train_df, val_df, test_df = env_split(df, seed=args.seed)
+    train_df, val_df, test_df = rm_safe_source_env_split(df,seed=args.seed) #env_split(df, seed=args.seed)
 
     train_df, val_df, test_df = preprocessing_data((train_df, val_df, test_df))
 

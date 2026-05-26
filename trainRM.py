@@ -13,10 +13,11 @@ import os
 
 import torch
 
-from ml.dataset import N_FEATURES, make_loaders, make_synthetic_data, env_split
+from ml.dataset import N_FEATURES, make_loaders, env_split , preprocessing_data , rm_safe_source_env_split
 from ml.model import RMYieldMLP
 from ml.trainer import run_epoch_rm, train_model_rm
 
+import pandas as pd
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser()
@@ -42,8 +43,11 @@ def main() -> None:
     print(f"Device: {device}")
 
     print("Loading data...")
-    df = make_synthetic_data(seed=args.seed)
-    train_df, val_df, test_df = env_split(df, seed=args.seed)
+    df = pd.read_csv("data.csv") #make_synthetic_data(seed=args.seed)
+
+    train_df, val_df, test_df = rm_safe_source_env_split(df,seed=args.seed) #env_split(df, seed=args.seed)
+
+    train_df, val_df, test_df = preprocessing_data((train_df, val_df, test_df))
     print(
         f"  train: {len(train_df):,} obs  "
         f"val: {len(val_df):,} obs  "
