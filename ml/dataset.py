@@ -49,12 +49,13 @@ class YieldDataset(Dataset):
     def __init__(self, df: pd.DataFrame, feature_cols: list[str] = FEATURE_COLS):
         self.X = torch.tensor(df[feature_cols].values, dtype=torch.float32)
         self.y = torch.tensor(df["yield"].values, dtype=torch.float32)
+        self.rm_id = torch.tensor(df["rm_id"].values, dtype=torch.long)
 
     def __len__(self) -> int:
         return len(self.y)
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
-        return self.X[idx], self.y[idx]
+        return self.X[idx], self.rm_id, self.y[idx]
 
 
 def make_loaders(
