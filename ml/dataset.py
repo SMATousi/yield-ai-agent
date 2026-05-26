@@ -2,8 +2,10 @@ import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import Dataset, DataLoader
+from sklearn.preprocessing import StandardScaler
+from typing import Callable
 
-N_FEATURES = 50
+N_FEATURES = 53
 FEATURE_COLS = [f"feat_{i}" for i in range(N_FEATURES)]
 
 
@@ -44,6 +46,57 @@ def env_split(
         df[df["env_id"].isin(test_envs)].reset_index(drop=True),
     )
 
+def standardize_data(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_column_name: str = "rm") -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    train_df, val_df, test_df = dfs
+
+    train_df = train_df.copy()
+    val_df = val_df.copy()
+    test_df = test_df.copy()
+
+    feature_cols = [
+        col for col in train_df.columns
+        if col not in ["yield", "env_id","region","dataset_source",rm_column_name,"feat_51","feat_52","feat_53"] #feats: 51, 52 and 53, hot encoding for Region
+    ]
+
+    scaler = StandardScaler()
+
+    train_df[feature_cols] = scaler.fit_transform(train_df[feature_cols])
+    val_df[feature_cols] = scaler.transform(val_df[feature_cols])
+    test_df[feature_cols] = scaler.transform(test_df[feature_cols])
+
+    return train_df, val_df, test_df
+
+def encode_rm(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_column_name: str = "rm") -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    train_df, val_df, test_df = dfs
+
+    train_df = train_df.copy()
+    val_df = val_df.copy()
+    test_df = test_df.copy()
+
+    rm_levels = sorted(train_df[rm_column_name].unique())
+    rm_ids = {mg: i for i, mg in enumerate(rm_levels)}
+
+    train_df["rm_id"] = train_df[rm_column_name].map(rm_ids)
+    val_df["rm_id"] = val_df[rm_column_name].map(rm_ids)
+    test_df["rm_id"] = test_df[rm_column_name].map(rm_ids)
+
+    train_df = train_df.drop(columns=[rm_column_name])
+    val_df = val_df.drop(columns=[rm_column_name])
+    test_df = test_df.drop(columns=[rm_column_name])
+
+    return train_df, val_df, test_df
+
+def preprocessing_data(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame],
+                       rm_column_name: str = "rm",
+                       ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    
+    train_df, val_df, test_df = dfs
+
+    train_df, val_df, test_df = standardize_data((train_df, val_df, test_df), rm_column_name)
+
+    train_df, val_df, test_df = encode_rm((train_df, val_df, test_df),rm_column_name)
+
+    return train_df, val_df, test_df
 
 class YieldDataset(Dataset):
     def __init__(self, df: pd.DataFrame, feature_cols: list[str] = FEATURE_COLS):
