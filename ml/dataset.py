@@ -55,7 +55,7 @@ class YieldDataset(Dataset):
         return len(self.y)
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
-        return self.X[idx], self.rm_id, self.y[idx]
+        return self.X[idx], self.rm_id[idx], self.y[idx]
 
 
 def make_loaders(
