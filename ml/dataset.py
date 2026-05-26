@@ -86,7 +86,7 @@ def source_env_split(
          df[df["env_id"].isin(test_envs)].reset_index(drop=True),
          )
 
-def are_rm_levels_in_train(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_column_name: str,) -> bool:
+def are_rm_levels_in_train(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_column_name: str = "rm",) -> bool:
     train_df, val_df, test_df = dfs
 
     train_rms = set(train_df[rm_column_name].unique())
@@ -97,7 +97,7 @@ def are_rm_levels_in_train(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame],
 
 def rm_safe_source_env_split(
         df: pd.DataFrame,
-        rm_column_name: str,
+        rm_column_name: str = "rm",
         val_frac: float = 0.15,
         test_frac: float = 0.15,
         seed: int = 42,
