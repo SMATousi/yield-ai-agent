@@ -73,12 +73,16 @@ def encode_rm(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_column_na
     val_df = val_df.copy()
     test_df = test_df.copy()
 
-    mg_levels = sorted(train_df[rm_column_name].unique())
-    mg_ids = {mg: i for i, mg in enumerate(mg_levels)}
+    rm_levels = sorted(train_df[rm_column_name].unique())
+    rm_ids = {mg: i for i, mg in enumerate(rm_levels)}
 
-    train_df["mg_id"] = train_df[rm_column_name].map(mg_ids)
-    val_df["mg_id"] = val_df[rm_column_name].map(mg_ids)
-    test_df["mg_id"] = test_df[rm_column_name].map(mg_ids)
+    train_df["rm_id"] = train_df[rm_column_name].map(rm_ids)
+    val_df["rm_id"] = val_df[rm_column_name].map(rm_ids)
+    test_df["rm_id"] = test_df[rm_column_name].map(rm_ids)
+
+    train_df = train_df.drop(columns=[rm_column_name])
+    val_df = val_df.drop(columns=[rm_column_name])
+    test_df = test_df.drop(columns=[rm_column_name])
 
     return train_df, val_df, test_df
 
