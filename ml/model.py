@@ -5,6 +5,8 @@ ACTIVATIONS = {
     "relu": nn.ReLU,
     "gelu": nn.GELU,
     "silu": nn.SiLU,
+    "tanh": nn.Tanh,
+    "sig": nn.Sigmoid,
 }
 
 
