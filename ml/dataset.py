@@ -46,7 +46,7 @@ def env_split(
         df[df["env_id"].isin(test_envs)].reset_index(drop=True),
     )
 
-def standardize_data(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_column_name: str = "rm") -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def standardize_data(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_column_name: str = "rm") -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, StandardScaler]:
     train_df, val_df, test_df = dfs
 
     train_df = train_df.copy()
@@ -55,16 +55,21 @@ def standardize_data(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_co
 
     feature_cols = [
         col for col in train_df.columns
-        if col not in ["yield", "env_id","region","dataset_source",rm_column_name,"feat_51","feat_52","feat_53"] #feats: 51, 52 and 53, hot encoding for Region
+        if col not in ["yield","env_id","region","dataset_source",rm_column_name,"feat_51","feat_52","feat_53"] #feats: 51, 52 and 53, hot encoding for Region
     ]
 
     scaler = StandardScaler()
+    y_scaler = StandardScaler()
 
     train_df[feature_cols] = scaler.fit_transform(train_df[feature_cols])
     val_df[feature_cols] = scaler.transform(val_df[feature_cols])
     test_df[feature_cols] = scaler.transform(test_df[feature_cols])
 
-    return train_df, val_df, test_df
+    train_df[["yield"]] = y_scaler.fit_transform(train_df[["yield"]])
+    val_df[["yield"]] = y_scaler.transform(val_df[["yield"]])
+    test_df[["yield"]] = y_scaler.transform(test_df[["yield"]])
+
+    return train_df, val_df, test_df, y_scaler
 
 def encode_rm(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_column_name: str = "rm") -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     train_df, val_df, test_df = dfs
@@ -92,11 +97,11 @@ def preprocessing_data(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame],
     
     train_df, val_df, test_df = dfs
 
-    train_df, val_df, test_df = standardize_data((train_df, val_df, test_df), rm_column_name)
+    train_df, val_df, test_df, y_scaler = standardize_data((train_df, val_df, test_df), rm_column_name)
 
     train_df, val_df, test_df = encode_rm((train_df, val_df, test_df),rm_column_name)
 
-    return train_df, val_df, test_df
+    return train_df, val_df, test_df, y_scaler
 
 class YieldDataset(Dataset):
     def __init__(self, df: pd.DataFrame, feature_cols: list[str] = FEATURE_COLS):

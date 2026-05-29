@@ -23,7 +23,7 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser()
     p.add_argument("--n-layers", type=int, default=2)
     p.add_argument("--hidden-size", type=int, default=128)
-    p.add_argument("--activation", default="relu", choices=["relu", "gelu", "silu"])
+    p.add_argument("--activation", default="relu", choices=["relu", "gelu", "silu","tanh","sig"])
     p.add_argument("--dropout", type=float, default=0.2)
     p.add_argument("--batch-norm", action="store_true")
     p.add_argument("--lr", type=float, default=1e-3)
@@ -47,7 +47,7 @@ def main() -> None:
 
     train_df, val_df, test_df = env_split(df, seed=args.seed)
 
-    train_df, val_df, test_df = preprocessing_data((train_df, val_df, test_df))
+    train_df, val_df, test_df, y_scaler = preprocessing_data((train_df, val_df, test_df))
 
     print(
         f"  train: {len(train_df):,} obs  "
@@ -79,12 +79,13 @@ def main() -> None:
         n_epochs=args.n_epochs,
         patience=args.patience,
         device=device,
+        y_scaler=y_scaler
     )
 
     import math
     import torch.nn as nn
     criterion = nn.MSELoss()
-    test_rmse = run_epoch(model, test_loader, None, criterion, device, train=False)
+    test_rmse = run_epoch(model, test_loader, None, criterion, device, y_scaler, train=False)
     print(f"\nBest val RMSE : {best_val_rmse:.4f}")
     print(f"Test RMSE     : {test_rmse:.4f}")
 

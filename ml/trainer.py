@@ -4,7 +4,7 @@ from typing import Optional
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-
+from sklearn.preprocessing import StandardScaler
 from ml.model import YieldMLP
 
 
@@ -14,6 +14,7 @@ def run_epoch(
     optimizer: Optional[torch.optim.Optimizer],
     criterion: nn.Module,
     device: torch.device,
+    y_scaler: StandardScaler,
     train: bool = True,
 ) -> float:
     """Run one epoch; return RMSE."""
@@ -31,7 +32,7 @@ def run_epoch(
                 optimizer.step()
             total_loss += loss.item() * len(y)
             n += len(y)
-    return math.sqrt(total_loss / n)
+    return math.sqrt(total_loss / n) * y_scaler.scale_[0] # Yield in the orignal scale
 
 
 def train_model(
@@ -44,6 +45,7 @@ def train_model(
     n_epochs: int,
     patience: int,
     device: torch.device,
+    y_scaler: StandardScaler,
     verbose: bool = True,
 ) -> tuple[float, list[dict]]:
     """Train with early stopping; return (best_val_rmse, history)."""
@@ -57,8 +59,8 @@ def train_model(
     history = []
 
     for epoch in range(1, n_epochs + 1):
-        train_rmse = run_epoch(model, train_loader, optimizer, criterion, device, train=True)
-        val_rmse = run_epoch(model, val_loader, None, criterion, device, train=False)
+        train_rmse = run_epoch(model, train_loader, optimizer, criterion, device, y_scaler, train=True)
+        val_rmse = run_epoch(model, val_loader, None, criterion, device, y_scaler, train=False)
         history.append({"epoch": epoch, "train_rmse": train_rmse, "val_rmse": val_rmse})
 
         if verbose and (epoch % 10 == 0 or epoch == 1):
