@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from sklearn.preprocessing import StandardScaler
-from ml.model import YieldMLP
 
 
 def run_epoch(
@@ -14,10 +13,10 @@ def run_epoch(
     optimizer: Optional[torch.optim.Optimizer],
     criterion: nn.Module,
     device: torch.device,
-    y_scaler: StandardScaler,
+    y_scaler: Optional[StandardScaler] = None,
     train: bool = True,
 ) -> float:
-    """Run one epoch; return RMSE."""
+    """Run one epoch; return RMSE in original yield units when y_scaler is provided."""
     model.train(train)
     total_loss = 0.0
     n = 0
@@ -32,11 +31,12 @@ def run_epoch(
                 optimizer.step()
             total_loss += loss.item() * len(y)
             n += len(y)
-    return math.sqrt(total_loss / n) * y_scaler.scale_[0] # Yield in the orignal scale
+    scale = y_scaler.scale_[0] if y_scaler is not None else 1.0
+    return math.sqrt(total_loss / n) * scale
 
 
 def train_model(
-    model: YieldMLP,
+    model: nn.Module,
     train_loader: DataLoader,
     val_loader: DataLoader,
     lr: float,
@@ -45,7 +45,7 @@ def train_model(
     n_epochs: int,
     patience: int,
     device: torch.device,
-    y_scaler: StandardScaler,
+    y_scaler: Optional[StandardScaler] = None,
     verbose: bool = True,
 ) -> tuple[float, list[dict]]:
     """Train with early stopping; return (best_val_rmse, history)."""

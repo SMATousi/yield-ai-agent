@@ -8,6 +8,21 @@ from typing import Callable
 N_FEATURES = 53
 FEATURE_COLS = [f"feat_{i}" for i in range(N_FEATURES)]
 
+# Columns that are never model inputs
+_NON_FEATURE_COLS = {"yield", "env_id", "region", "dataset_source"}
+
+
+def get_feature_cols(df: pd.DataFrame) -> list[str]:
+    """Return predictor columns with rm_id (categorical) always last.
+
+    This ordering is required by YieldFTTransformer, which expects
+    len(cat_cardinalities) categorical features at the tail of the tensor.
+    """
+    cols = [c for c in df.columns if c not in _NON_FEATURE_COLS]
+    if "rm_id" in cols:
+        cols = [c for c in cols if c != "rm_id"] + ["rm_id"]
+    return cols
+
 
 def make_synthetic_data(n_obs: int = 8500, n_envs: int = 608, seed: int = 42) -> pd.DataFrame:
     """Synthetic dataset mimicking the real 50-predictor schema (placeholder for steps 1-3)."""
@@ -120,9 +135,12 @@ def make_loaders(
     val_df: pd.DataFrame,
     test_df: pd.DataFrame,
     batch_size: int = 64,
+    feature_cols: list[str] | None = None,
 ) -> tuple[DataLoader, DataLoader, DataLoader]:
+    if feature_cols is None:
+        feature_cols = FEATURE_COLS
     return (
-        DataLoader(YieldDataset(train_df), batch_size=batch_size, shuffle=True),
-        DataLoader(YieldDataset(val_df), batch_size=256),
-        DataLoader(YieldDataset(test_df), batch_size=256),
+        DataLoader(YieldDataset(train_df, feature_cols), batch_size=batch_size, shuffle=True),
+        DataLoader(YieldDataset(val_df, feature_cols), batch_size=256),
+        DataLoader(YieldDataset(test_df, feature_cols), batch_size=256),
     )
