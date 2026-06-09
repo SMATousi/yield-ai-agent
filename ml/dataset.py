@@ -3,9 +3,10 @@ import pandas as pd
 import torch
 from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import StandardScaler
-from typing import Callable
+from sklearn.model_selection import StratifiedGroupKFold
 
-N_FEATURES = 53
+
+N_FEATURES = 55
 FEATURE_COLS = [f"feat_{i}" for i in range(N_FEATURES)]
 
 # Columns that are never model inputs
@@ -60,6 +61,42 @@ def env_split(
         df[df["env_id"].isin(val_envs)].reset_index(drop=True),
         df[df["env_id"].isin(test_envs)].reset_index(drop=True),
     )
+
+def are_rm_levels_in_train(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_column_name: str = "rm",) -> bool:
+    train_df, val_df, test_df = dfs
+
+    train_rms = set(train_df[rm_column_name].unique())
+    val_rms = set(val_df[rm_column_name].unique())
+    test_rms = set(test_df[rm_column_name].unique())
+
+    return val_rms.issubset(train_rms) and test_rms.issubset(train_rms)
+
+def rm_safe_env_split(
+        df: pd.DataFrame,
+        rm_column_name: str = "rm",
+        val_frac: float = 0.15,
+        test_frac: float = 0.15,
+        seed: int = 42,
+    ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+
+    train_df, val_df, test_df = env_split(df, val_frac,test_frac,seed)
+
+    all_rms = are_rm_levels_in_train((train_df, val_df, test_df), rm_column_name)
+
+    iteration = 0
+
+    while not all_rms and iteration < 50:
+          iteration += 1
+          seed += 1
+
+          train_df, val_df, test_df = env_split(df, val_frac,test_frac,seed)
+          all_rms = are_rm_levels_in_train((train_df, val_df, test_df), rm_column_name)
+
+    if not all_rms:
+        raise ValueError("Could not find a split where all RM levels in val/test are present in train.")
+
+    print(f"Seed used for splitting: {seed} after {iteration} retries.")
+    return train_df, val_df, test_df
 
 def standardize_data(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_column_name: str = "rm") -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, StandardScaler]:
     train_df, val_df, test_df = dfs

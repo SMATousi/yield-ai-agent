@@ -17,7 +17,7 @@ import os
 import torch
 import torch.nn as nn
 
-from ml.dataset import get_feature_cols, make_loaders, env_split, preprocessing_data
+from ml.dataset import get_feature_cols, make_loaders, rm_safe_env_split, preprocessing_data,env_split
 from ml.model import YieldFTTransformer, YieldMLP
 from ml.trainer import run_epoch, train_model
 
@@ -84,7 +84,7 @@ def main() -> None:
     print(f"Loading data from {args.data} ...")
     df = pd.read_csv(args.data)
 
-    train_df, val_df, test_df = env_split(df, seed=args.seed)
+    train_df, val_df, test_df = rm_safe_env_split(df, seed=args.seed)
     train_df, val_df, test_df, y_scaler = preprocessing_data((train_df, val_df, test_df))
     print(
         f"  train: {len(train_df):,} obs  "
