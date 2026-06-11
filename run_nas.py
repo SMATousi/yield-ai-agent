@@ -19,7 +19,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from ml.dataset import YieldDataset, get_feature_cols, env_split, preprocessing_data
+from ml.dataset import YieldDataset, get_feature_cols, env_split, preprocessing_data,rm_safe_env_split
 from ml.model import YieldFTTransformer, YieldMLP
 from ml.nas import run_nas, run_nas_ft
 from ml.trainer import run_epoch, train_model
@@ -70,7 +70,7 @@ def main() -> None:
 
     print(f"\nLoading data from {args.data} ...")
     df = pd.read_csv(args.data)
-    train_df, val_df, test_df = env_split(df, seed=args.seed)
+    train_df, val_df, test_df = rm_safe_env_split(df, seed=args.seed)
     train_df, val_df, test_df, y_scaler = preprocessing_data((train_df, val_df, test_df))
     print(
         f"  train: {len(train_df):,} obs  "
@@ -79,9 +79,18 @@ def main() -> None:
     )
 
     feature_cols = get_feature_cols(train_df)
+    CAT_COLS = ["rm_id", "feat_56", "feat_57"]
+    cat_cols_present = [c for c in CAT_COLS if c in feature_cols]
+
     input_dim = len(feature_cols)
-    n_num = input_dim - 1 if "rm_id" in feature_cols else input_dim
-    cat_cardinalities = [int(train_df["rm_id"].max()) + 1] if "rm_id" in feature_cols else []
+    n_num = input_dim - len(cat_cols_present)
+    cat_cardinalities = []
+    if "feat_56" in feature_cols:
+        cat_cardinalities.append(2)
+    if "feat_57" in feature_cols:
+        cat_cardinalities.append(2)
+    if "rm_id" in feature_cols:
+        cat_cardinalities.append(int(train_df["rm_id"].max()) + 1)
     print(f"  features: {input_dim} total  ({n_num} continuous, {len(cat_cardinalities)} categorical)")
 
     train_ds = YieldDataset(train_df, feature_cols)
@@ -107,6 +116,7 @@ def main() -> None:
             n_trials=args.n_trials,
             n_epochs=args.n_epochs,
             patience=args.patience,
+            y_scaler=y_scaler
         )
 
     best = study.best_trial

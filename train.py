@@ -93,9 +93,18 @@ def main() -> None:
     )
 
     feature_cols = get_feature_cols(train_df)
+    CAT_COLS = ["rm_id", "feat_56", "feat_57"]
+    cat_cols_present = [c for c in CAT_COLS if c in feature_cols]
+
     input_dim = len(feature_cols)
-    n_num = input_dim - 1 if "rm_id" in feature_cols else input_dim
-    cat_cardinalities = [int(train_df["rm_id"].max()) + 1] if "rm_id" in feature_cols else []
+    n_num = input_dim - len(cat_cols_present)
+    cat_cardinalities = []
+    if "feat_56" in feature_cols:
+        cat_cardinalities.append(2)
+    if "feat_57" in feature_cols:
+        cat_cardinalities.append(2)
+    if "rm_id" in feature_cols:
+        cat_cardinalities.append(int(train_df["rm_id"].max()) + 1)
 
     train_loader, val_loader, test_loader = make_loaders(
         train_df, val_df, test_df, batch_size=args.batch_size, feature_cols=feature_cols

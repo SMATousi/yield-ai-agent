@@ -3,10 +3,11 @@ import pandas as pd
 import torch
 from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import StratifiedGroupKFold
+from sklearn.impute import SimpleImputer
 
 
-N_FEATURES = 55
+N_FEATURES = 57
+
 FEATURE_COLS = [f"feat_{i}" for i in range(N_FEATURES)]
 
 # Columns that are never model inputs
@@ -98,6 +99,22 @@ def rm_safe_env_split(
     print(f"Seed used for splitting: {seed} after {iteration} retries.")
     return train_df, val_df, test_df
 
+def impute_NA(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rs_column_name: str, pop_column_name: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    train_df, val_df, test_df = dfs
+
+    train_df = train_df.copy()
+    val_df = val_df.copy()
+    test_df = test_df.copy()
+
+    
+    imputer = SimpleImputer(strategy="most_frequent")
+
+    train_df[[rs_column_name,pop_column_name]] = imputer.fit_transform(train_df[[rs_column_name,pop_column_name]])
+    val_df[[rs_column_name,pop_column_name]] = imputer.transform(val_df[[rs_column_name,pop_column_name]])
+    test_df[[rs_column_name,pop_column_name]] = imputer.transform(test_df[[rs_column_name,pop_column_name]])
+
+    return train_df, val_df, test_df
+
 def standardize_data(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_column_name: str = "rm") -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, StandardScaler]:
     train_df, val_df, test_df = dfs
 
@@ -107,7 +124,7 @@ def standardize_data(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_co
 
     feature_cols = [
         col for col in train_df.columns
-        if col not in ["yield","env_id","region","dataset_source",rm_column_name,"feat_51","feat_52","feat_53"] #feats: 51, 52 and 53, hot encoding for Region
+        if col not in ["yield","env_id","region","dataset_source",rm_column_name,"feat_56","feat_57"] 
     ]
 
     scaler = StandardScaler()
@@ -145,9 +162,13 @@ def encode_rm(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], rm_column_na
 
 def preprocessing_data(dfs: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame],
                        rm_column_name: str = "rm",
+                       rs_column_name: str = "feat_1", 
+                       pop_column_name: str = "feat_0"
                        ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     
     train_df, val_df, test_df = dfs
+
+    train_df, val_df, test_df = impute_NA((train_df, val_df, test_df),rs_column_name,pop_column_name)
 
     train_df, val_df, test_df, y_scaler = standardize_data((train_df, val_df, test_df), rm_column_name)
 

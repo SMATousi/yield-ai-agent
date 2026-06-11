@@ -4,11 +4,11 @@ import optuna
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-
+from typing import Optional
 from ml.dataset import YieldDataset
 from ml.model import YieldFTTransformer, YieldMLP
 from ml.trainer import run_epoch
-
+from sklearn.preprocessing import StandardScaler
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
 
@@ -93,6 +93,7 @@ def _objective_ft(
     device: torch.device,
     n_epochs: int,
     patience: int,
+    y_scaler: Optional[StandardScaler] = None,
 ) -> float:
     d_token = trial.suggest_categorical("d_token", [64, 128, 256])
     n_heads = trial.suggest_categorical("n_heads", [4, 8])
@@ -124,8 +125,8 @@ def _objective_ft(
     no_improve = 0
 
     for epoch in range(n_epochs):
-        run_epoch(model, train_loader, optimizer, criterion, device, train=True)
-        val_rmse = run_epoch(model, val_loader, None, criterion, device, train=False)
+        run_epoch(model, train_loader, optimizer, criterion, device, train=True, y_scaler=y_scaler)
+        val_rmse = run_epoch(model, val_loader, None, criterion, device, train=False, y_scaler=y_scaler)
 
         trial.report(val_rmse, epoch)
         if trial.should_prune():
@@ -148,6 +149,7 @@ def run_nas_ft(
     n_num_features: int,
     cat_cardinalities: list[int],
     device: torch.device,
+    y_scaler: Optional[StandardScaler] = None,
     n_trials: int = 50,
     n_epochs: int = 100,
     patience: int = 10,
@@ -165,7 +167,7 @@ def run_nas_ft(
     study.optimize(
         lambda trial: _objective_ft(
             trial, train_ds, val_ds, n_num_features, cat_cardinalities,
-            device, n_epochs, patience,
+            device, n_epochs, patience, y_scaler
         ),
         n_trials=n_trials,
         show_progress_bar=True,
